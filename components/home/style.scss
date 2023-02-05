@@ -1,0 +1,35 @@
+.homeComponent {
+	min-height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0px 50px;
+
+	.wrapper {
+		max-width: 1200px;
+
+		.leftAlign,
+		.rightAlign {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.rightAlign {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+
+			p {
+				color: black;
+				font-size: 2rem;
+			}
+
+			button {
+				border-radius: 20px;
+				background-color: #1a73e8;
+				color: white;
+			}
+		}
+	}
+}
