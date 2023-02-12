@@ -11,9 +11,11 @@ import Video from "./components/video";
 type Props = {
 	mediaStream?: MediaStream;
 	myStream?: boolean;
+	controls?: boolean;
+	style?: React.CSSProperties
 };
 
-const VideoStream = ({ mediaStream, myStream }: Props) => {
+const VideoStream = ({ mediaStream, myStream ,style, ...rest}: Props) => {
 	const [stream, setStream] = useState<MediaStream | null>(null);
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const ref = useRef();
@@ -55,12 +57,12 @@ const VideoStream = ({ mediaStream, myStream }: Props) => {
 		if (!videoRef.current) return;
 
 		if (videoRef.current.srcObject) return;
-		console.log(stream);
+		
 		videoRef.current.srcObject = stream;
 	}, [stream]);
 	return (
-		<div className='videoStream'>
-			<Video ref={videoRef} myStream={myStream} />
+		<div className='videoStream' style={style}>
+			<Video ref={videoRef} myStream={myStream} {...rest}/>
 		</div>
 	);
 };

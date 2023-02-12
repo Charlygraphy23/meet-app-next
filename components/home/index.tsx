@@ -12,9 +12,9 @@ const HomeComponent = ({ switchView }: Props) => {
 
 	return (
 		<div className='homeComponent container-fluid'>
-			<div className='row w-100 justify-content-center wrapper'>
-				<div className='leftAlign col-md-8'>
-					<VideoStream myStream />
+			<div className='row w-100 justify-content-center wrapper' >
+				<div className='leftAlign col-md-8' style={{maxHeight : '400px'}}>
+					<VideoStream myStream controls/>
 				</div>
 				<div className='rightAlign col-md-4'>
 					<p>Ready to join?</p>

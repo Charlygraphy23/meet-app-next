@@ -6,9 +6,10 @@ import { getLocalMediaStream, toggleVideoCamera } from "utils/index";
 
 type Props = {
 	myStream?: boolean;
+	controls?: boolean
 };
 
-const Video = ({ myStream }: Props, ref: React.Ref<HTMLVideoElement>) => {
+const Video = ({ myStream , controls = false}: Props, ref: React.Ref<HTMLVideoElement>) => {
 	const [videoState, setVideoState] = useState({
 		mute: false,
 		video: true,
@@ -53,7 +54,7 @@ const Video = ({ myStream }: Props, ref: React.Ref<HTMLVideoElement>) => {
 		<div className='videoStream__wrapper'>
 			<video ref={ref} autoPlay muted={myStream}></video>
 
-			<div className='tools'>
+			{controls && <div className='tools'>
 				<Button
 					className={classNames("", {
 						error: videoState.mute,
@@ -71,7 +72,7 @@ const Video = ({ myStream }: Props, ref: React.Ref<HTMLVideoElement>) => {
 							!videoState.video ? "-off" : ""
 						}`}></i>
 				</Button>
-			</div>
+			</div>}
 		</div>
 	);
 };
