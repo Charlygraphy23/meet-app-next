@@ -1,51 +1,44 @@
-import { Peer } from 'peerjs'
-import { useEffect, useRef, useState } from 'react'
+import { Peer } from "peerjs";
+import { useEffect, useRef, useState } from "react";
 
 const usePeer = () => {
+	const [peer, setPeer] = useState<Peer>();
+	const [id, setId] = useState<string>();
+	const ref = useRef();
 
-    const [peer, setPeer] = useState<Peer>()
-    const [id, setId] = useState<string>()
-    const ref = useRef()
+	useEffect(() => {
+		if (!peer) return;
 
+		// events
+		peer.on("open", function (id: string) {
+			console.log("My peer ID is: " + id);
+			setId(id);
+		});
 
-    useEffect(() => {
-        if (!peer) return
+		return () => {
+			peer.disconnect();
+			peer.destroy();
+		};
+	}, [peer]);
 
-        // events
-        peer.on('open', function (id: string) {
-            console.log('My peer ID is: ' + id);
-            setId(id)
-        });
+	// Init Peer Js
+	useEffect(() => {
+		if (ref.current) return;
+		// @ts-expect-error
+		ref.current = true;
+		const fn = async () => {
+			const PeerJs = (await import("peerjs")).default;
+			const peer = new PeerJs("", {});
 
-        return () => {
-            peer.disconnect()
-            peer.destroy()
-        }
+			setPeer(peer);
+		};
+		fn();
+	}, []);
 
-    }, [peer])
+	return {
+		peer,
+		id,
+	};
+};
 
-    // Init Peer Js
-    useEffect(() => {
-
-        if (ref.current) return;
-        // @ts-expect-error
-        ref.current = true
-        const fn = async () => {
-            const PeerJs = (await import('peerjs')).default;
-            const peer = new PeerJs("", { debug: 3 })
-
-            setPeer(peer)
-        }
-        fn()
-
-    }, [])
-
-
-    return {
-        peer,
-        id
-    }
-
-}
-
-export default usePeer
+export default usePeer;

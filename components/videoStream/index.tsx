@@ -12,10 +12,10 @@ type Props = {
 	mediaStream?: MediaStream;
 	myStream?: boolean;
 	controls?: boolean;
-	style?: React.CSSProperties
+	style?: React.CSSProperties;
 };
 
-const VideoStream = ({ mediaStream, myStream ,style, ...rest}: Props) => {
+const VideoStream = ({ mediaStream, myStream, style, ...rest }: Props) => {
 	const [stream, setStream] = useState<MediaStream | null>(null);
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const ref = useRef();
@@ -57,12 +57,12 @@ const VideoStream = ({ mediaStream, myStream ,style, ...rest}: Props) => {
 		if (!videoRef.current) return;
 
 		if (videoRef.current.srcObject) return;
-		
+
 		videoRef.current.srcObject = stream;
 	}, [stream]);
 	return (
 		<div className='videoStream' style={style}>
-			<Video ref={videoRef} myStream={myStream} {...rest}/>
+			<Video ref={videoRef} myStream={myStream} {...rest} />
 		</div>
 	);
 };

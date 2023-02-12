@@ -1,38 +1,33 @@
 $grid_column_length: 3;
 
 .callLayout {
-    width: 100%;
-    min-height: 100vh;
-    background-color: rgb(32, 33, 36);
+	width: 100%;
+	min-height: 100vh;
+	background-color: rgb(32, 33, 36);
 
-    display: flex;
-    flex-direction: column;
+	display: flex;
+	flex-direction: column;
 
-    width: 100%;
-    padding: 1rem;
+	width: 100%;
+	padding: 1rem;
 }
 
 .control__group {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    gap: 2.5rem;
-    padding: 10px 0px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	gap: 2.5rem;
+	padding: 10px 0px;
 
-    button {
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        font-size: 3rem;
-        line-height: 10px;
-        background: transparent;
-        border: 1px solid white;
-        color: white;
-
-        &.error {
-            background-color: red;
-            border-color: red;
-        }
-    }
+	button {
+		border-radius: 50%;
+		width: 50px;
+		height: 50px;
+		font-size: 3rem;
+		line-height: 10px;
+		background: transparent;
+		border: 1px solid white;
+		color: white;
+	}
 }

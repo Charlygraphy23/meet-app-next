@@ -1,21 +1,27 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import HomeComponent from "components/home";
 import { io } from "socket.io-client";
-import { useDispatch } from "react-redux";
-import { getSocket } from "store/actions";
+import { useDispatch, useSelector } from "react-redux";
+import { addMyId, getSocket } from "store/actions";
 import CallLayout from "components/call/layout";
-import { handleAbortController } from "utils";
+import { getLocalMediaStream, handleAbortController } from "utils";
 import usePeer from "hooks/usePeer";
+import { StoreType } from "store";
+import { useRouter } from "next/router";
+import { UserStream } from "interface";
 
 const HomePage = () => {
 	const ref = useRef();
 	const dispatch = useDispatch();
 	const [showCallView, setShowCallView] = useState(false);
-	const {id} = usePeer()
+	const { id, peer } = usePeer();
+	const { socket } = useSelector((state: StoreType) => state.SocketReducer);
+	const { query } = useRouter();
+	const roomID = query.roomId;
 
 	const handleSocket = useCallback(async () => {
-		const abortController = handleAbortController()
-		await fetch("/api/socket" , {signal : abortController.signal});
+		const abortController = handleAbortController();
+		await fetch("/api/socket", { signal: abortController.signal });
 
 		const socket = io();
 
@@ -28,15 +34,26 @@ const HomePage = () => {
 			console.log("Socket Disconnected");
 		});
 
-		return ()=> {
+		return () => {
 			abortController.abort();
 
-			if(socket.active){
+			if (socket.connected) {
 				socket.disconnect();
-				socket.off()
+				socket.off();
 			}
 		};
 	}, [dispatch]);
+
+	const handleViewSwitch = useCallback(async () => {
+		if (!socket?.connected) return;
+		if (!id) return;
+		console.log("HANDE");
+		socket.emit("join-room", {
+			room: roomID,
+			userId: id,
+		});
+		setShowCallView(!showCallView);
+	}, [id, roomID, showCallView, socket]);
 
 	useEffect(() => {
 		if (ref.current) return;
@@ -47,15 +64,16 @@ const HomePage = () => {
 		handleSocket();
 	}, [handleSocket]);
 
-	const handleViewSwitch = useCallback(async () => {
-		setShowCallView(!showCallView);
-	}, [showCallView]);
+	useEffect(() => {
+		if (!id) return;
 
+		dispatch(addMyId(id));
+	}, [id, dispatch]);
 
 	return (
 		<>
 			{showCallView ? (
-				<CallLayout />
+				<CallLayout peer={peer} />
 			) : (
 				<HomeComponent switchView={handleViewSwitch} />
 			)}

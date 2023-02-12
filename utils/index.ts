@@ -22,25 +22,24 @@ export const toggleVideoCamera = async (
 	VideoStream: MediaStream,
 	isVideo: boolean
 ) => {
-	if (!isVideo && VideoStream.getVideoTracks().length) {
+	if (!isVideo && VideoStream?.getVideoTracks()?.length) {
 		VideoStream.getVideoTracks()[0].enabled = isVideo;
 		VideoStream.getVideoTracks()[0].stop();
 		VideoStream.removeTrack(VideoStream.getVideoTracks()[0]);
 	} else {
 		const newStream = await getLocalMediaStream({ video: true });
-		VideoStream.addTrack(newStream.getVideoTracks()[0]);
+		VideoStream?.addTrack(newStream.getVideoTracks()[0]);
 	}
 
 	return VideoStream;
 };
 
-
 export const handleAbortController = () => {
 	const controller = new AbortController();
-	const signal = controller.signal
+	const signal = controller.signal;
 
 	return {
 		abort: () => controller.abort(),
-        signal,
-	}
-}
+		signal,
+	};
+};

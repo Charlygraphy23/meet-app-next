@@ -3,6 +3,7 @@ import { Socket } from "socket.io/dist/socket";
 import SocketIO from "utils/socket-server";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import { Server } from "socket.io";
+import { socketEvents } from "utils/socket-events";
 
 type Data = {
 	server: Server;
@@ -31,7 +32,7 @@ export default function handler(
 				>
 			) => {
 				socketIo.socket = socket;
-				console.log(socket);
+				// socketEvents(io, socket);
 			}
 		);
 

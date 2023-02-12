@@ -1,15 +1,20 @@
 import VideoStream from "components/videoStream";
-import React, { useCallback } from "react";
-import css from './style.module.scss'
+import { UserStream } from "interface";
+import React, { useCallback, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { StoreType } from "store";
+import css from "./style.module.scss";
 
-const oneElementStyle: React.CSSProperties = {
+type Props = {
+	streams: UserStream[];
+};
 
-}
-
-const CallComponent = () => {
+const CallComponent = ({ streams }: Props) => {
+	const { socket, ownId } = useSelector(
+		(state: StoreType) => state.SocketReducer
+	);
 
 	const determineColumn = useCallback((length: number) => {
-
 		switch (length) {
 			case 1:
 				return 12;
@@ -28,20 +33,27 @@ const CallComponent = () => {
 			default:
 				return 2;
 		}
+	}, []);
 
-
-
-	}, [])
+	useEffect(() => {
+		if (!socket) return;
+		if (!socket.connected) return;
+	}, [socket]);
 
 	return (
 		<div className={`row m-0 justify-content-center`}>
-			{Array(1).fill(0).map((_, i, arr) => <div className={`col-${determineColumn(arr.length)}`} style={{ marginBottom: "1rem", maxHeight: '700px' }} key={i} >
-				<VideoStream myStream style={{}} />
-			</div>
-			)}
-
-
-
+			{streams.map((data, i) => (
+				<div
+					className={`col-${determineColumn(streams.length)}`}
+					style={{ marginBottom: "1rem", maxHeight: "700px" }}
+					key={i}>
+					<VideoStream
+						myStream={data.userId === ownId}
+						style={{}}
+						mediaStream={data.stream}
+					/>
+				</div>
+			))}
 		</div>
 	);
 };
