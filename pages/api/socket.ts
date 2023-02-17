@@ -32,7 +32,7 @@ export default function handler(
 				>
 			) => {
 				socketIo.socket = socket;
-				// socketEvents(io, socket);
+				socketEvents(io, socket);
 			}
 		);
 

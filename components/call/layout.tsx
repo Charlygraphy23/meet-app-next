@@ -22,6 +22,8 @@ const CallLayout = ({ peer }: Props) => {
 	});
 	const videoEffectRef = useRef();
 	const peerRef = useRef();
+	const streamsRef = useRef();
+
 	const { socket } = useSelector((state: StoreType) => state.SocketReducer);
 
 	const getVideo = useCallback(async () => {
@@ -68,13 +70,11 @@ const CallLayout = ({ peer }: Props) => {
 	}, [getVideo, peer]);
 
 	useEffect(() => {
-		if (peerRef.current === peer) return;
-		// @ts-expect-error
-		peerRef.current = peer;
+		if(!peer) return;
 
 		peer.on("call", (call) => {
 			const otherUserId = call.peer;
-			console.log("Answer", streams?.[0]?.stream);
+			console.log("Answer", streams);
 			call.answer(streams?.[0]?.stream);
 			call.on("stream", function (otherUserStream) {
 				console.log("Other Stream ", otherUserStream);
@@ -83,15 +83,30 @@ const CallLayout = ({ peer }: Props) => {
 				//     createVideo(otherUserStream , otherUserId)
 				//     streamSet.add(otherUserStream.id)
 				// }
-				setStreams((prevState) => [
-					...prevState,
-					{
-						stream: otherUserStream,
-						userId: otherUserId,
-					},
-				]);
+				setStreams((prevState) => {
+
+					const hasStream = prevState.find(stream =>  stream.userId === otherUserId)
+
+					if(!hasStream)
+					return [
+						...prevState,
+						{
+							stream: otherUserStream,
+							userId: otherUserId,
+						},
+					]
+
+
+					return prevState
+				});
 			});
 		});
+
+		return () => {
+			if(!peer) return;
+
+			peer.off('call')
+		}
 	}, [peer, streams]);
 
 	useEffect(() => {
@@ -109,13 +124,23 @@ const CallLayout = ({ peer }: Props) => {
 				_call.on("stream", function (otherUserStream: MediaStream) {
 					console.log("Stream CALL", otherUserStream);
 
-					setStreams((prevState) => [
+
+					setStreams((prevState) => {
+
+					const hasStream = prevState.find(stream =>  stream.userId === userId)
+
+					if(!hasStream)
+					return [
 						...prevState,
 						{
 							stream: otherUserStream,
-							userId,
+							userId
 						},
-					]);
+					]
+
+
+					return prevState
+				});
 
 					// if (!streamSet.has(otherUserStream.id)) {
 					// 	createVideo(otherUserStream, anotherUserId);
@@ -125,10 +150,19 @@ const CallLayout = ({ peer }: Props) => {
 			}
 		});
 
+		socket.on("delete-video", (userId) => {
+			setStreams(prevState => {
+				return prevState.filter(stream => stream.userId === userId)
+			})
+						
+		});
+
+
 		return () => {
 			if (!socket) return;
 			if (!socket.connected) return;
 			socket.off("joined");
+			socket.off("delete-video");
 		};
 	}, [peer, socket, streams]);
 
