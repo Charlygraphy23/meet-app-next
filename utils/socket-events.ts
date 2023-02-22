@@ -14,5 +14,19 @@ export const socketEvents = (
 			console.log("Socket Disconnected", socket.id);
 			socket.broadcast.to(room).emit("delete-video", userId);
 		});
+
+		socket.on("toggle-audio-emit", (isMute: boolean) => {
+			socket.broadcast.to(room).emit("toggle-audio", {
+				mute : isMute,
+				userId
+			});
+		});
+
+		socket.on("toggle-video-emit", (isVideo: boolean) => {
+			socket.broadcast.to(room).emit("toggle-video", {
+				video : isVideo,
+				userId
+			});
+		});
 	});
 };

@@ -7,6 +7,7 @@ const Emitter = {
 	once: (event: string, fn: any) => eventEmitter.once(event, fn),
 	off: (event: string, fn?: any) => eventEmitter.off(event, fn),
 	emit: (event: string, payload: any) => eventEmitter.emit(event, payload),
+	clean: (event: string, fn: any) => eventEmitter.removeListener(event , fn)
 };
 
 Object.freeze(Emitter);

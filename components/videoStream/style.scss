@@ -27,6 +27,15 @@ $height: 416px;
 			-moz-transform: rotateY(180deg); /* Firefox */
 		}
 
+		.loadingText{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 2;
+			color: white;
+		}
+
 		.tools {
 			position: absolute;
 			bottom: 0px;
@@ -53,6 +62,17 @@ $height: 416px;
 					border-color: red;
 				}
 			}
+		}
+
+		.mute__icon{
+			position: absolute;
+			bottom: 10px;
+			right: 10px;
+
+			display: flex;
+			padding: 10px;
+			filter: invert(1) drop-shadow(0px 10px 30px rgba(black , 0.2));
+			
 		}
 	}
 }

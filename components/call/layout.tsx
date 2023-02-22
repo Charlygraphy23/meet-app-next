@@ -3,7 +3,6 @@ import Button from "components/button";
 import { UserStream } from "interface";
 import Peer from "peerjs";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { getLocalMediaStream } from "utils";
 import Emitter from "utils/emitter";
 import CallComponent from ".";
 import css from "./style.module.scss";
@@ -12,89 +11,87 @@ import { StoreType } from "store";
 
 type Props = {
 	peer?: Peer;
+	stream: UserStream;
+	update: (stream: UserStream) => void
 };
 
-const CallLayout = ({ peer }: Props) => {
+const CallLayout = ({ peer, stream: myStream }: Props) => {
 	const [streams, setStreams] = useState<UserStream[]>([]);
-	const [videoState, setVideoState] = useState({
-		mute: false,
-		video: true,
-	});
 	const videoEffectRef = useRef();
-	const peerRef = useRef();
-	const streamsRef = useRef();
+	const { socket  , ownId} = useSelector((state: StoreType) => state.SocketReducer);
 
-	const { socket } = useSelector((state: StoreType) => state.SocketReducer);
+	const updateStream = useCallback((_stream : UserStream) => {
+		console.log("Update stream" , _stream)
+		const userID = _stream.userId;
+		setStreams((prevState) => prevState.map(data => {
 
-	const getVideo = useCallback(async () => {
-		if (!peer) return;
-
-		try {
-			const _stream = await getLocalMediaStream({ video: true, audio: true });
-			console.log(_stream);
-			setStreams([
-				{
-					stream: _stream,
-					userId: peer.id,
-				},
-			]);
-		} catch (err) {
-			console.error(err);
-		}
-	}, [peer]);
+			if(data.userId === userID) {
+				return {
+					...data,
+					..._stream
+				}
+			}
+			return data
+		}))
+		
+	} , [])
 
 	const toggleVideo = useCallback(() => {
-		Emitter.emit("TOGGLE-TOOL", "video");
-		setVideoState((prevState) => ({
-			...prevState,
-			video: !prevState.video,
-		}));
-	}, []);
+		Emitter.emit("TOGGLE-TOOL", {type : "video" , userID : ownId});
+		const isVideo = streams?.[0]?.video
+		if (socket && socket.connected) {
+			socket.emit("toggle-video-emit", !isVideo)
+		}
+	}, [ownId, socket, streams]);
 
 	const toggleAudio = useCallback(() => {
-		Emitter.emit("TOGGLE-TOOL", "mic");
-		setVideoState((prevState) => ({
-			...prevState,
-			mute: !prevState.mute,
-		}));
-	}, []);
+		Emitter.emit("TOGGLE-TOOL",  {type : "mic" , userID : ownId});
+		const isMute = streams?.[0]?.mute
+
+		if (socket && socket.connected) {
+			socket.emit("toggle-audio-emit", !isMute)
+		}
+	}, [ownId, streams, socket]);
+
+
+	useEffect(() => {
+		if (!myStream) return;
+
+		if (videoEffectRef.current === myStream.stream) return;
+		// @ts-expect-error
+		videoEffectRef.current = myStream.stream;
+
+		setStreams([myStream])
+	}, [myStream]);
+
 
 	useEffect(() => {
 		if (!peer) return;
 
-		if (videoEffectRef.current === peer.id) return;
-		// @ts-expect-error
-		videoEffectRef.current = peer.id;
-
-		getVideo();
-	}, [getVideo, peer]);
-
-	useEffect(() => {
-		if(!peer) return;
-
-		peer.on("call", (call) => {
+		 peer.on("call", (call) => {
+			const myStream = streams?.[0]?.stream
 			const otherUserId = call.peer;
+
+
+			if (!myStream) return;
 			console.log("Answer", streams);
-			call.answer(streams?.[0]?.stream);
+			call.answer(myStream);
 			call.on("stream", function (otherUserStream) {
 				console.log("Other Stream ", otherUserStream);
-
-				// if (!streamSet.has(otherUserStream.id)) {
-				//     createVideo(otherUserStream , otherUserId)
-				//     streamSet.add(otherUserStream.id)
-				// }
 				setStreams((prevState) => {
 
-					const hasStream = prevState.find(stream =>  stream.userId === otherUserId)
+					const hasStream = prevState.find(stream => stream.userId === otherUserId)
 
-					if(!hasStream)
-					return [
-						...prevState,
-						{
-							stream: otherUserStream,
-							userId: otherUserId,
-						},
-					]
+					if (!hasStream)
+						return [
+							...prevState,
+							{
+								stream: otherUserStream,
+								userId: otherUserId,
+								video: otherUserStream.active,
+								mute: !otherUserStream.getAudioTracks()[0].enabled
+							},
+						]
 
 
 					return prevState
@@ -102,11 +99,6 @@ const CallLayout = ({ peer }: Props) => {
 			});
 		});
 
-		return () => {
-			if(!peer) return;
-
-			peer.off('call')
-		}
 	}, [peer, streams]);
 
 	useEffect(() => {
@@ -123,38 +115,33 @@ const CallLayout = ({ peer }: Props) => {
 
 				_call.on("stream", function (otherUserStream: MediaStream) {
 					console.log("Stream CALL", otherUserStream);
-
-
 					setStreams((prevState) => {
+						const hasStream = prevState.find(stream => stream.userId === userId)
 
-					const hasStream = prevState.find(stream =>  stream.userId === userId)
+						if (!hasStream)
+							return [
+								...prevState,
+								{
+									stream: otherUserStream,
+									userId,
+									video: otherUserStream.active,
+									mute: !otherUserStream.getAudioTracks()[0].enabled
+								},
+							]
 
-					if(!hasStream)
-					return [
-						...prevState,
-						{
-							stream: otherUserStream,
-							userId
-						},
-					]
 
+						return prevState
+					});
 
-					return prevState
-				});
-
-					// if (!streamSet.has(otherUserStream.id)) {
-					// 	createVideo(otherUserStream, anotherUserId);
-					// 	streamSet.add(otherUserStream.id);
-					// }
 				});
 			}
 		});
 
 		socket.on("delete-video", (userId) => {
 			setStreams(prevState => {
-				return prevState.filter(stream => stream.userId === userId)
+				return prevState.filter(stream => stream.userId !== userId)
 			})
-						
+
 		});
 
 
@@ -176,7 +163,7 @@ const CallLayout = ({ peer }: Props) => {
 					overflow: "auto",
 				}}>
 				<div className='col-12'>
-					<CallComponent streams={streams} />
+					<CallComponent streams={streams} updateStream={updateStream}/>
 				</div>
 			</div>
 
@@ -185,20 +172,19 @@ const CallLayout = ({ peer }: Props) => {
 					<div className={css.control__group}>
 						<Button
 							className={classNames("", {
-								error: videoState.mute,
+								error: streams?.[0]?.mute,
 							})}
 							onClick={toggleAudio}>
-							<i className={`bi bi-mic${videoState.mute ? "-mute" : ""}`}></i>
+							<i className={`bi bi-mic${streams?.[0]?.mute ? "-mute" : ""}`}></i>
 						</Button>
 						<Button
 							className={classNames("", {
-								error: !videoState.video,
+								error: !streams?.[0]?.video,
 							})}
 							onClick={toggleVideo}>
 							<i
-								className={`bi bi-camera-video${
-									!videoState.video ? "-off" : ""
-								}`}></i>
+								className={`bi bi-camera-video${!streams?.[0]?.video ? "-off" : ""
+									}`}></i>
 						</Button>
 					</div>
 				</div>

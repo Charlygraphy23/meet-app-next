@@ -3,13 +3,13 @@ import { UserStream } from "interface";
 import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { StoreType } from "store";
-import css from "./style.module.scss";
 
 type Props = {
 	streams: UserStream[];
+	updateStream: (stream : UserStream) => void;
 };
 
-const CallComponent = ({ streams }: Props) => {
+const CallComponent = ({ streams , updateStream}: Props) => {
 	const { socket, ownId } = useSelector(
 		(state: StoreType) => state.SocketReducer
 	);
@@ -48,9 +48,10 @@ const CallComponent = ({ streams }: Props) => {
 					style={{ marginBottom: "1rem", maxHeight: "700px" }}
 					key={i}>
 					<VideoStream
-						myStream={data.userId === ownId}
+						isMyStream={data.userId === ownId}
 						style={{}}
-						mediaStream={data.stream}
+						stream={data}
+						updateStream={updateStream}
 					/>
 				</div>
 			))}

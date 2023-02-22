@@ -12,12 +12,35 @@ import { UserStream } from "interface";
 
 const HomePage = () => {
 	const ref = useRef();
+
 	const dispatch = useDispatch();
 	const [showCallView, setShowCallView] = useState(false);
 	const { id, peer } = usePeer();
 	const { socket } = useSelector((state: StoreType) => state.SocketReducer);
 	const { query } = useRouter();
 	const roomID = query.roomId;
+	const [stream, setStream] = useState<UserStream>({
+		video : false,
+		mute : true
+	} as UserStream);
+
+	const getVideo = useCallback(async (id: string) => {
+		try {
+			const _stream = await getLocalMediaStream({ video: true, audio: true });
+			
+			setStream({
+				stream : _stream,
+				userId : id,
+				video : _stream.active,
+				mute : !_stream.getAudioTracks()[0].enabled,
+				loading : false,
+				loadingText : ""
+			});
+		} catch (err) {
+			console.error(err);
+		}
+	}, []);
+
 
 	const handleSocket = useCallback(async () => {
 		const abortController = handleAbortController();
@@ -47,7 +70,6 @@ const HomePage = () => {
 	const handleViewSwitch = useCallback(async () => {
 		if (!socket?.connected) return;
 		if (!id) return;
-		console.log("HANDE");
 		socket.emit("join-room", {
 			room: roomID,
 			userId: id,
@@ -55,12 +77,16 @@ const HomePage = () => {
 		setShowCallView(!showCallView);
 	}, [id, roomID, showCallView, socket]);
 
+	const updateStream = useCallback((stream : UserStream) => {
+		setStream(stream)
+	} , [])
+
 	useEffect(() => {
 		if (ref.current) return;
 
 		// @ts-expect-error
 		ref.current = true;
-
+		setStream(prevState => ({...prevState, loading : true , loadingText : "Please wait..."}))
 		handleSocket();
 	}, [handleSocket]);
 
@@ -68,14 +94,17 @@ const HomePage = () => {
 		if (!id) return;
 
 		dispatch(addMyId(id));
-	}, [id, dispatch]);
+		setStream(prevState => ({...prevState, loading : true , loadingText : "Connecting..."}))
+		getVideo(id);
+	}, [id, dispatch, getVideo]);
+
 
 	return (
 		<>
 			{showCallView ? (
-				<CallLayout peer={peer} />
+				<CallLayout peer={peer} stream={stream} update={updateStream}/>
 			) : (
-				<HomeComponent switchView={handleViewSwitch} />
+				<HomeComponent switchView={handleViewSwitch} stream={stream} updateStream={updateStream}/>
 			)}
 		</>
 	);
