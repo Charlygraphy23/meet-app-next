@@ -61,8 +61,8 @@ const HomePage = () => {
 			abortController.abort();
 
 			if (socket.connected) {
-				socket.disconnect();
-				socket.off();
+				socket.off("connect");
+				socket.off("disconnect");
 			}
 		};
 	}, [dispatch]);

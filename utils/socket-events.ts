@@ -22,10 +22,10 @@ export const socketEvents = (
 			});
 		});
 
-		socket.on("toggle-video-emit", (isVideo: boolean) => {
+		socket.on("toggle-video-emit", ({isVideo , id}: {isVideo: boolean , id: string}) => {
 			socket.broadcast.to(room).emit("toggle-video", {
 				video : isVideo,
-				userId
+				userId : id
 			});
 		});
 	});

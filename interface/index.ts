@@ -6,3 +6,9 @@ export interface UserStream {
 	loading?: boolean;
 	loadingText?: string
 }
+
+
+export interface RefHandlerType {
+	toggleEvent: (type: "mic" | "video" , payload : any) => any,
+	updateVideoStream: () => void
+}

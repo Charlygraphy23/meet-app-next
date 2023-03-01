@@ -1,5 +1,6 @@
 import VideoStream from "components/videoStream";
 import { UserStream } from "interface";
+import Peer from "peerjs";
 import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { StoreType } from "store";
@@ -7,9 +8,10 @@ import { StoreType } from "store";
 type Props = {
 	streams: UserStream[];
 	updateStream: (stream : UserStream) => void;
+	peer?: Peer
 };
 
-const CallComponent = ({ streams , updateStream}: Props) => {
+const CallComponent = ({ streams , updateStream , peer}: Props) => {
 	const { socket, ownId } = useSelector(
 		(state: StoreType) => state.SocketReducer
 	);
@@ -52,6 +54,7 @@ const CallComponent = ({ streams , updateStream}: Props) => {
 						style={{}}
 						stream={data}
 						updateStream={updateStream}
+						peer={peer}
 					/>
 				</div>
 			))}

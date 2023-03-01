@@ -20,16 +20,20 @@ export const getLocalMediaStream = async ({
 
 export const toggleVideoCamera = async (
 	VideoStream: MediaStream,
-	isVideo: boolean
+	isVideo: boolean,
 ) => {
-	if (!isVideo && VideoStream?.getVideoTracks()?.length) {
+		console.log("Inside toggleVideoCamera" , {video : VideoStream.getVideoTracks() , isVideo})
+
+	if (!isVideo) {
 		VideoStream.getVideoTracks()[0].enabled = isVideo;
-		// VideoStream.getVideoTracks()[0].stop();
-		// VideoStream.removeTrack(VideoStream.getVideoTracks()[0]);
-	} else {
+		VideoStream.getVideoTracks()[0].stop();
+		VideoStream.removeTrack(VideoStream.getVideoTracks()[0]);
+	} 
+	else {
 		const newStream = await getLocalMediaStream({ video: true });
 		VideoStream?.addTrack(newStream.getVideoTracks()[0]);
 	}
+
 
 	return VideoStream;
 };

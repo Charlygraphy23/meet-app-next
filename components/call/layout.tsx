@@ -40,7 +40,7 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 		Emitter.emit("TOGGLE-TOOL", {type : "video" , userID : ownId});
 		const isVideo = streams?.[0]?.video
 		if (socket && socket.connected) {
-			socket.emit("toggle-video-emit", !isVideo)
+			socket.emit("toggle-video-emit", {isVideo : !isVideo , id : ownId})
 		}
 	}, [ownId, socket, streams]);
 
@@ -163,7 +163,7 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 					overflow: "auto",
 				}}>
 				<div className='col-12'>
-					<CallComponent streams={streams} updateStream={updateStream}/>
+					<CallComponent streams={streams} updateStream={updateStream} peer={peer}/>
 				</div>
 			</div>
 
