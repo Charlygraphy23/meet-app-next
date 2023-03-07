@@ -30,6 +30,24 @@
 				background-color: #1a73e8;
 				color: white;
 			}
+
+
+			.google__sign{
+				background-color: white;
+				border-radius: 0px;
+				color: black;
+				border: 1px solid rgba(black , 0.1);
+				transition: 0.3s all linear;
+
+				span{
+					font-size: 1.2rem;
+					margin-left: 1.1rem;
+				}
+
+				&:hover{
+					border-color: black;
+				}
+			}
 		}
 	}
 }

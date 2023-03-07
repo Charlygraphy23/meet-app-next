@@ -29,5 +29,10 @@ $grid_column_length: 3;
 		background: transparent;
 		border: 1px solid white;
 		color: white;
+
+
+		&[class*=" error"]{
+			border: none
+		}
 	}
 }

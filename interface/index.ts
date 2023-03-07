@@ -4,7 +4,8 @@ export interface UserStream {
 	video : boolean;
 	mute : boolean;
 	loading?: boolean;
-	loadingText?: string
+	loadingText?: string;
+	name?: string;
 }
 
 

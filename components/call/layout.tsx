@@ -21,7 +21,6 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 	const { socket  , ownId} = useSelector((state: StoreType) => state.SocketReducer);
 
 	const updateStream = useCallback((_stream : UserStream) => {
-		console.log("Update stream" , _stream)
 		const userID = _stream.userId;
 		setStreams((prevState) => prevState.map(data => {
 
@@ -74,10 +73,8 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 
 
 			if (!myStream) return;
-			console.log("Answer", streams);
 			call.answer(myStream);
 			call.on("stream", function (otherUserStream) {
-				console.log("Other Stream ", otherUserStream);
 				setStreams((prevState) => {
 
 					const hasStream = prevState.find(stream => stream.userId === otherUserId)
@@ -88,8 +85,9 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 							{
 								stream: otherUserStream,
 								userId: otherUserId,
-								video: otherUserStream.active,
-								mute: !otherUserStream.getAudioTracks()[0].enabled
+								video: !otherUserStream.getVideoTracks()[0].enabled,
+								mute: otherUserStream.getAudioTracks()[0].enabled,
+								name: call?.metadata?.name || ""
 							},
 						]
 
@@ -105,16 +103,14 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 		if (!socket) return;
 		if (!socket.connected) return;
 
-		socket.on("joined", ({ userId }) => {
+		socket.on("joined", ({ userId , name }) => {
 			if (!peer) return;
-			console.log("New USer Joined 1");
 			const ownMediaStream = streams?.[0]?.stream;
 			if (ownMediaStream) {
-				console.log("New USer Joined");
-				const _call = peer.call(userId, ownMediaStream);
+				const _call = peer.call(userId, ownMediaStream , {metadata: {name}});
 
 				_call.on("stream", function (otherUserStream: MediaStream) {
-					console.log("Stream CALL", otherUserStream);
+
 					setStreams((prevState) => {
 						const hasStream = prevState.find(stream => stream.userId === userId)
 
@@ -124,8 +120,9 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 								{
 									stream: otherUserStream,
 									userId,
-									video: otherUserStream.active,
-									mute: !otherUserStream.getAudioTracks()[0].enabled
+									video: !otherUserStream.getVideoTracks()[0].enabled,
+									mute: otherUserStream.getAudioTracks()[0].enabled,
+									name: _call?.metadata?.name || ""
 								},
 							]
 

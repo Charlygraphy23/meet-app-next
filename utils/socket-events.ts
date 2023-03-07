@@ -6,10 +6,10 @@ export const socketEvents = (
 	socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>
 ) => {
 	socket.on("join-room", (payload: any) => {
-		const { room, userId } = payload;
+		const { room, userId , name} = payload;
 		console.log("User Joined ", room);
 		socket.join(room);
-		socket.broadcast.to(room).emit("joined", { userId });
+		socket.broadcast.to(room).emit("joined", { userId , name});
 		socket.on("disconnect", () => {
 			console.log("Socket Disconnected", socket.id);
 			socket.broadcast.to(room).emit("delete-video", userId);

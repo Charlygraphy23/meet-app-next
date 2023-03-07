@@ -16,8 +16,8 @@ const CallComponent = ({ streams , updateStream , peer}: Props) => {
 		(state: StoreType) => state.SocketReducer
 	);
 
-	const determineColumn = useCallback((length: number) => {
-		switch (length) {
+	const determineColumn = useCallback(() => {		
+		switch (streams.length) {
 			case 1:
 				return 12;
 			case 2:
@@ -35,7 +35,7 @@ const CallComponent = ({ streams , updateStream , peer}: Props) => {
 			default:
 				return 2;
 		}
-	}, []);
+	}, [streams?.length]);
 
 	useEffect(() => {
 		if (!socket) return;
@@ -46,8 +46,8 @@ const CallComponent = ({ streams , updateStream , peer}: Props) => {
 		<div className={`row m-0 justify-content-center`}>
 			{streams.map((data, i) => (
 				<div
-					className={`col-${determineColumn(streams.length)}`}
-					style={{ marginBottom: "1rem", maxHeight: "700px" }}
+					className={`col-${determineColumn()}`}
+					style={{ marginBottom: streams?.length > 1 ? "1rem" : '0rem', maxHeight: "700px" }}
 					key={i}>
 					<VideoStream
 						isMyStream={data.userId === ownId}

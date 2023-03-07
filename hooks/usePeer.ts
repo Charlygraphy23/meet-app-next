@@ -1,3 +1,4 @@
+import { useSession } from "next-auth/react"
 import { Peer } from "peerjs";
 import { useEffect, useRef, useState } from "react";
 
@@ -11,7 +12,6 @@ const usePeer = () => {
 
 		// events
 		peer.on("open", function (id: string) {
-			console.log("My peer ID is: " + id);
 			setId(id);
 		});
 
@@ -23,9 +23,11 @@ const usePeer = () => {
 
 	// Init Peer Js
 	useEffect(() => {
+
 		if (ref.current) return;
 		// @ts-expect-error
 		ref.current = true;
+
 		const fn = async () => {
 			const PeerJs = (await import("peerjs")).default;
 			const peer = new PeerJs("", {});

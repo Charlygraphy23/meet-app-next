@@ -13,7 +13,7 @@ export const getLocalMediaStream = async ({
 		});
 		return localStream;
 	} catch (error: any) {
-		console.log(error);
+		console.error(error);
 		throw new Error(error.message);
 	}
 };

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React from "react";
 
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
 	disabled?: boolean;
 	style?: React.CSSProperties;
 	id?: string;
+	link?: string
 };
 
 const Button = ({
@@ -18,7 +20,23 @@ const Button = ({
 	disabled = false,
 	style,
 	id,
+	link
 }: Props) => {
+
+	if (link) {
+		return <Link href={link}>
+			<button
+				className={`appButton ${className}`}
+				type={type}
+				onClick={onClick}
+				disabled={disabled}
+				style={style}
+				id={id}>
+				{children}
+			</button>
+		</Link>
+	}
+
 	return (
 		<button
 			className={`appButton ${className}`}

@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import Button from "components/button";
 import classNames from "classnames";
 import Emitter from "utils/emitter";
@@ -8,6 +8,7 @@ import Image from "next/image";
 import { RefHandlerType, UserStream } from "interface";
 import { toggleVideoCamera } from "utils";
 import Peer from "peerjs";
+import { useSession } from "next-auth/react";
 
 type Props = {
 	isMyStream?: boolean;
@@ -24,14 +25,25 @@ const Video = (
 ) => {
 	const { ownId } = useSelector((state: StoreType) => state.SocketReducer);
 	const videoRef = useRef() as React.MutableRefObject<HTMLVideoElement>;
+	const {data: session} = useSession()
+	const randomColor = useCallback(() => {
+		const x = Math.floor(Math.random() * 256);
+		const y = Math.floor(Math.random() * 256);
+		const z = Math.floor(Math.random() * 256);
+		return "rgb(" + x + "," + y + "," + z + ")";
+	} , [])
+	const userBackgroundColor = useMemo(() => randomColor() , [randomColor])
 
 
+	const sliceName = useCallback(() => {
+		return stream?.name?.charAt(0)?.toUpperCase() || ""
+	} , [stream])
 
+	
 	const handleCameraToggle = useCallback(
 		async (id?: string, otherUser: boolean = false) => {
 			const localStream = stream.stream
 			const isVideo = !stream.video
-			console.log("Video trigger", { id, ownId , isVideo , video : localStream.getVideoTracks() , otherUser})
 
 			localStream.getVideoTracks()[0].enabled = isVideo;
 
@@ -47,7 +59,7 @@ const Video = (
 		[ownId, stream, updateStream]
 	);
 
-	const handleMicToggle = useCallback(async (id?: string, otherUser: boolean = false) => {
+	const handleMicToggle = useCallback(async () => {
 		const localStream = stream.stream
 		const isMute = !stream.mute
 
@@ -64,7 +76,7 @@ const Video = (
 	const handleToolClick = useCallback(
 		async (type: string, id?: string, otherUser?: boolean) => {
 			if (["mic"].includes(type)) {
-				await handleMicToggle(id, otherUser)
+				await handleMicToggle()
 			}
 
 			if (["video"].includes(type)) {
@@ -75,15 +87,16 @@ const Video = (
 		[handleCameraToggle, handleMicToggle]
 	);
 
+
 	useImperativeHandle(ref, () => ({
 		toggleEvent: (type: "mic" | "video" , payload: any) => {
-			console.log("Toggle emit ", {type , payload, idd:stream.userId})
 			if (stream.userId === payload.userId) {
 				handleToolClick(type, payload.userId, true)
 			}
 		},
 		updateVideoStream: () => {
 			if (!videoRef.current) return;
+			if (videoRef.current.srcObject === stream.stream) return;
 			videoRef.current.srcObject = stream.stream
 		}
 	}), [handleToolClick, stream]);
@@ -110,6 +123,10 @@ const Video = (
 			</h1> */}
 			<video ref={videoRef} autoPlay muted={isMyStream}></video>
 			{stream.loading && <h2 className="loadingText">{stream.loadingText}</h2>}
+
+			{!controls && session && !stream.video && <div className="userName" style={{backgroundColor : userBackgroundColor}}>
+				<span>{sliceName()}</span>
+			</div>}
 
 			{controls && (
 				<div className='tools'>

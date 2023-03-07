@@ -9,10 +9,12 @@ import usePeer from "hooks/usePeer";
 import { StoreType } from "store";
 import { useRouter } from "next/router";
 import { UserStream } from "interface";
+import { signOut, useSession } from "next-auth/react";
 
 const HomePage = () => {
 	const ref = useRef();
-
+	const sessionRef = useRef();
+	const { data: session } = useSession();
 	const dispatch = useDispatch();
 	const [showCallView, setShowCallView] = useState(false);
 	const { id, peer } = usePeer();
@@ -20,22 +22,23 @@ const HomePage = () => {
 	const { query } = useRouter();
 	const roomID = query.roomId;
 	const [stream, setStream] = useState<UserStream>({
-		video : false,
-		mute : true
+		video: false,
+		mute: true
 	} as UserStream);
 
 	const getVideo = useCallback(async (id: string) => {
 		try {
 			const _stream = await getLocalMediaStream({ video: true, audio: true });
-			
-			setStream({
-				stream : _stream,
-				userId : id,
-				video : _stream.active,
-				mute : !_stream.getAudioTracks()[0].enabled,
-				loading : false,
-				loadingText : ""
-			});
+
+			setStream(prevState => ({
+				...prevState,
+				stream: _stream,
+				userId: id,
+				video: _stream.active,
+				mute: !_stream.getAudioTracks()[0].enabled,
+				loading: false,
+				loadingText: ""
+			}));
 		} catch (err) {
 			console.error(err);
 		}
@@ -49,12 +52,10 @@ const HomePage = () => {
 		const socket = io();
 
 		socket.on("connect", () => {
-			console.log(socket);
 			dispatch(getSocket(socket));
 		});
 
 		socket.on("disconnect", () => {
-			console.log("Socket Disconnected");
 		});
 
 		return () => {
@@ -73,20 +74,21 @@ const HomePage = () => {
 		socket.emit("join-room", {
 			room: roomID,
 			userId: id,
+			name : session?.user?.name || ""
 		});
 		setShowCallView(!showCallView);
-	}, [id, roomID, showCallView, socket]);
+	}, [id, roomID, session?.user?.name, showCallView, socket]);
 
-	const updateStream = useCallback((stream : UserStream) => {
+	const updateStream = useCallback((stream: UserStream) => {
 		setStream(stream)
-	} , [])
+	}, [])
 
 	useEffect(() => {
 		if (ref.current) return;
 
 		// @ts-expect-error
 		ref.current = true;
-		setStream(prevState => ({...prevState, loading : true , loadingText : "Please wait..."}))
+		setStream(prevState => ({ ...prevState, loading: true, loadingText: "Please wait..." }))
 		handleSocket();
 	}, [handleSocket]);
 
@@ -94,17 +96,29 @@ const HomePage = () => {
 		if (!id) return;
 
 		dispatch(addMyId(id));
-		setStream(prevState => ({...prevState, loading : true , loadingText : "Connecting..."}))
+		setStream(prevState => ({ ...prevState, loading: true, loadingText: "Connecting..." }))
 		getVideo(id);
 	}, [id, dispatch, getVideo]);
 
+	useEffect(() => {
+
+		if (sessionRef.current === session) return;
+		// @ts-expect-error
+		sessionRef.current = session
+
+
+		setStream(prevState => ({
+			...prevState,
+			name: session?.user?.name || ""
+		}))
+	}, [session])
 
 	return (
 		<>
-			{showCallView ? (
-				<CallLayout peer={peer} stream={stream} update={updateStream}/>
+			{showCallView && session ? (
+				<CallLayout peer={peer} stream={stream} update={updateStream} />
 			) : (
-				<HomeComponent switchView={handleViewSwitch} stream={stream} updateStream={updateStream}/>
+				<HomeComponent switchView={handleViewSwitch} stream={stream} updateStream={updateStream} />
 			)}
 		</>
 	);

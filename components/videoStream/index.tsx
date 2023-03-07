@@ -60,7 +60,6 @@ const VideoStream = ({ stream, style, ...rest }: Props) => {
 	useEffect(() => {
 		if (!stream) return;
 		if (!videoRef.current) return;
-		console.log("Re-render stream");
 		videoRef.current.updateVideoStream()
 	}, [stream]);
 	return (
