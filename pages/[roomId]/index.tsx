@@ -112,6 +112,7 @@ const HomePage = () => {
 			name: session?.user?.name || ""
 		}))
 	}, [session])
+	console.log("DD" , showCallView , session)
 
 	return (
 		<>
