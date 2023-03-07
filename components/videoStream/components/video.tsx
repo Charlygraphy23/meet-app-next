@@ -49,14 +49,14 @@ const Video = (
 
 				const _stream = {
 					...stream,
-					video: isVideo,
+					video: localStream.getVideoTracks()[0].enabled,
 					stream: localStream,
 				}
 
 				return updateStream(_stream)
 
 		},
-		[ownId, stream, updateStream]
+		[stream, updateStream]
 	);
 
 	const handleMicToggle = useCallback(async () => {
@@ -109,7 +109,7 @@ const Video = (
 
 		return () => {
 			Emitter.off("TOGGLE-TOOL", handleToggle);
-			Emitter.clean("TOGGLE-TOOL", handleToggle);
+			// Emitter.clean("TOGGLE-TOOL", handleToggle);
 
 		};
 	}, [handleToolClick, stream?.userId]);

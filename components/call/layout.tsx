@@ -63,6 +63,10 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 		setStreams([myStream])
 	}, [myStream]);
 
+	const handleClose = useCallback(() => {
+		close()
+	} , [])
+
 
 	useEffect(() => {
 		if (!peer) return;
@@ -75,8 +79,8 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 			if (!myStream) return;
 			call.answer(myStream);
 			call.on("stream", function (otherUserStream) {
-				setStreams((prevState) => {
 
+				setStreams((prevState) => {
 					const hasStream = prevState.find(stream => stream.userId === otherUserId)
 
 					if (!hasStream)
@@ -85,8 +89,8 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 							{
 								stream: otherUserStream,
 								userId: otherUserId,
-								video: !otherUserStream.getVideoTracks()[0].enabled,
-								mute: otherUserStream.getAudioTracks()[0].enabled,
+								video: call?.metadata?.video,
+								mute:  call?.metadata?.mute,
 								name: call?.metadata?.name || ""
 							},
 						]
@@ -107,7 +111,7 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 			if (!peer) return;
 			const ownMediaStream = streams?.[0]?.stream;
 			if (ownMediaStream) {
-				const _call = peer.call(userId, ownMediaStream , {metadata: {name}});
+				const _call = peer.call(userId, ownMediaStream , {metadata: {name , video : streams?.[0].video , mute : streams?.[0].mute}});
 
 				_call.on("stream", function (otherUserStream: MediaStream) {
 
@@ -120,8 +124,8 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 								{
 									stream: otherUserStream,
 									userId,
-									video: !otherUserStream.getVideoTracks()[0].enabled,
-									mute: otherUserStream.getAudioTracks()[0].enabled,
+									video: _call?.metadata?.video,
+									mute:  _call?.metadata?.mute,
 									name: _call?.metadata?.name || ""
 								},
 							]
@@ -182,6 +186,13 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 							<i
 								className={`bi bi-camera-video${!streams?.[0]?.video ? "-off" : ""
 									}`}></i>
+						</Button>
+						<Button
+							className={classNames("", {
+								error: true,
+							})}
+							onClick={handleClose}>
+							<i className={`bi bi-telephone-fill ${css.icon_rotate}`} style={{transform : 'rotate(95deg)'}}></i>
 						</Button>
 					</div>
 				</div>
