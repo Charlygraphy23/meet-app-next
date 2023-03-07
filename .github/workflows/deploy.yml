@@ -16,7 +16,7 @@ jobs:
         uses: dkershner6/vercel-set-env-action@v1
         with:
           token: ${{secrets.VERCEL_TOKEN}}
-          projectName: meet-app
+          projectName: meet-app-next
           envVariableKeys: GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,NEXTAUTH_URL,NEXTAUTH_SECRET
         env:
           GOOGLE_CLIENT_ID: ${{secrets.GOOGLE_CLIENT_ID}}
