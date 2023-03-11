@@ -1,42 +1,31 @@
-name: meet-app-next
-on: 
-  push: 
-    branches:
-      - "main"
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
+name: meet-app-nect
+
+on:
+  push:
+    branches: [main]
 
 jobs:
-  vercel:
+  build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
       - uses: actions/checkout@v2
-
-      - name: set ENV 
-        uses: dkershner6/vercel-set-env-action@v1
+      - name: Set Env Vars on Heroku Project
+        uses: akhileshns/heroku-deploy@v3.12.12
         with:
-          token: ${{secrets.VERCEL_TOKEN}}
-          projectName: meet-app-next
-          envVariableKeys: GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,NEXTAUTH_URL,NEXTAUTH_SECRET
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "meet-app-next" #Must be unique in Heroku
+          heroku_email: "dipta.biswas231998@gmail.com"
         env:
           GOOGLE_CLIENT_ID: ${{secrets.GOOGLE_CLIENT_ID}}
-          TARGET_GOOGLE_CLIENT_ID: production
-          TYPE_GOOGLE_CLIENT_ID: plain
           GOOGLE_CLIENT_SECRET: ${{secrets.GOOGLE_CLIENT_SECRET}}
-          TARGET_GOOGLE_CLIENT_SECRET: production
-          TYPE_GOOGLE_CLIENT_SECRET: plain
           NEXTAUTH_URL: ${{secrets.NEXTAUTH_URL}}
-          TARGET_NEXTAUTH_URL: production
-          TYPE_NEXTAUTH_URL: plain
           NEXTAUTH_SECRET: ${{secrets.NEXTAUTH_SECRET}}
-          TARGET_NEXTAUTH_SECRET: production
-          TYPE_NEXTAUTH_SECRET: plain
-
-      - name: Deploying..
-        uses: amondnet/vercel-action@v20
-        with: 
-          vercel-token: ${{secrets.VERCEL_TOKEN}}
-          vercel-org-id: ${{secrets.VERCEL_ORG_ID}}
-          vercel-project-id: ${{secrets.PROJECT_ID}}
-          vercel-args: "--prod"
-          envVariableKeys: ""
