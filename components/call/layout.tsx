@@ -8,6 +8,7 @@ import CallComponent from ".";
 import css from "./style.module.scss";
 import { useSelector } from "react-redux";
 import { StoreType } from "store";
+import { useRouter } from "next/router";
 
 type Props = {
 	peer?: Peer;
@@ -19,6 +20,7 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 	const [streams, setStreams] = useState<UserStream[]>([]);
 	const videoEffectRef = useRef();
 	const { socket  , ownId} = useSelector((state: StoreType) => state.SocketReducer);
+	const router = useRouter()
 
 	const updateStream = useCallback((_stream : UserStream) => {
 		const userID = _stream.userId;
@@ -64,8 +66,8 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 	}, [myStream]);
 
 	const handleClose = useCallback(() => {
-		close()
-	} , [])
+		router.replace('/close')
+	} , [router])
 
 
 	useEffect(() => {
