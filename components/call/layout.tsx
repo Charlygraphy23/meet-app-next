@@ -67,7 +67,8 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 
 	const handleClose = useCallback(() => {
 		router.replace('/close')
-	} , [router])
+		socket?.disconnect()
+	} , [socket, router])
 
 
 	useEffect(() => {
