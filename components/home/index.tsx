@@ -31,7 +31,11 @@ const HomeComponent = ({ switchView, stream, updateStream }: Props) => {
 				</div>
 				<div className='rightAlign col-md-4 mt-5'>
 					<p>Ready to join?</p>
-					{session && <Button onClick={switchView}>Join now</Button>}
+					{session && <Button onClick={() => {
+						if(stream.loading) return;
+
+						switchView()
+					}}>{stream.loading ? 'Loading..' : 'Join now'}</Button>}
 					{!session && <Button className="google__sign" onClick={handleGoogleLogin}><Image src="https://img.icons8.com/color/48/null/google-logo.png" alt={"google_icon"} width={20} height={20} /> <span>Sign In With Google</span></Button>}
 				</div>
 			</div>

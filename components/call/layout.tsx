@@ -107,7 +107,7 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 		if (!socket) return;
 		if (!socket.connected) return;
 
-		socket.on("joined", ({ userId , name }) => {
+		socket.on("joined", ({ userId , name , video , mute}) => {
 			if (!peer) return;
 			const ownMediaStream = streams?.[0]?.stream;
 			if (ownMediaStream) {
@@ -124,9 +124,9 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 								{
 									stream: otherUserStream,
 									userId,
-									video: _call?.metadata?.video,
-									mute:  _call?.metadata?.mute,
-									name: _call?.metadata?.name || ""
+									video: video,
+									mute:  mute,
+									name: name || ""
 								},
 							]
 

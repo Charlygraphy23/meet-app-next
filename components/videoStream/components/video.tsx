@@ -117,9 +117,11 @@ const Video = (
 	return (
 		<div className='videoStream__wrapper'>
 
-			{/* 
-			<h1 style={{backgroundColor : "yellow" , color : "black"}}>
-				{stream.userId}
+			
+			{/* <h1 style={{backgroundColor : "yellow" , color : "black"}}>
+				{
+					JSON.stringify(stream)
+				}
 			</h1> */}
 			<video ref={videoRef} autoPlay muted={isMyStream}></video>
 			{stream.loading && <h2 className="loadingText">{stream.loadingText}</h2>}

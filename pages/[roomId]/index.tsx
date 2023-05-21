@@ -73,9 +73,11 @@ const HomePage = () => {
 			room: roomID,
 			userId: id,
 			name: session?.user?.name || "",
+			video: stream.video,
+			mute: stream.mute,
 		});
 		setShowCallView(!showCallView);
-	}, [id, roomID, session?.user?.name, showCallView, socket]);
+	}, [id, roomID, session?.user?.name, showCallView, socket, stream?.mute, stream?.video]);
 
 	const updateStream = useCallback((stream: UserStream) => {
 		setStream(stream);
