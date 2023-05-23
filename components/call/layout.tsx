@@ -9,6 +9,7 @@ import css from "./style.module.scss";
 import { useSelector } from "react-redux";
 import { StoreType } from "store";
 import { useRouter } from "next/router";
+import { getLocalShareScreen , getLocalMediaStream} from "utils";
 
 type Props = {
 	peer?: Peer;
@@ -53,6 +54,34 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 			socket.emit("toggle-audio-emit", !isMute)
 		}
 	}, [ownId, streams, socket]);
+
+
+	const handleShareScreen = useCallback(async () => {
+
+		const screenVideo = await getLocalShareScreen()
+		console.log("DD", screenVideo)
+
+		streams[0].stream.removeTrack(streams[0].stream.getVideoTracks()[0])
+		streams[0].stream.addTrack(screenVideo.getTracks()[0])
+
+
+		screenVideo.getVideoTracks()[0].onended = async  function () {
+			// doWhatYouNeedToDo();
+			const localStream = await getLocalMediaStream({video : true , audio : false})
+			streams[0].stream.removeTrack(screenVideo.getTracks()[0])
+			streams[0].stream.addTrack(localStream.getVideoTracks()[0])
+
+			for (let [key, value] of peer._connections.entries()) {
+				peer._connections.get(key)[0].peerConnection.getSenders()[1].replaceTrack(localStream.getTracks()[0])
+			}
+
+		};
+
+		for (let [key, value] of peer._connections.entries()) {
+			peer._connections.get(key)[0].peerConnection.getSenders()[1].replaceTrack(screenVideo.getTracks()[0])
+		}
+
+	},[peer , streams])
 
 
 	useEffect(() => {
@@ -189,6 +218,11 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 							<i
 								className={`bi bi-camera-video${!streams?.[0]?.video ? "-off" : ""
 									}`}></i>
+						</Button>
+						<Button
+							onClick={handleShareScreen}>
+							<i
+								className={`bi bi-arrow-up-circle`}></i>
 						</Button>
 						<Button
 							className={classNames("", {

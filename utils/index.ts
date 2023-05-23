@@ -18,6 +18,23 @@ export const getLocalMediaStream = async ({
 	}
 };
 
+
+export const getLocalShareScreen = async () => {
+	let localStream: MediaStream;
+	try {
+		localStream = await navigator.mediaDevices.getDisplayMedia({
+			video: {
+				cursor : "always",
+			},
+			audio: false
+		});
+		return localStream;
+	} catch (error: any) {
+		console.error(error);
+		throw new Error(error.message);
+	}
+};
+
 export const toggleVideoCamera = async (
 	VideoStream: MediaStream,
 	isVideo: boolean,
