@@ -128,6 +128,7 @@ const HomePage = () => {
 					switchView={handleViewSwitch}
 					stream={stream}
 					updateStream={updateStream}
+					replacePeer={replaceTrack}
 				/>
 			)}
 		</>

@@ -17,11 +17,14 @@ const usePeer = () => {
 	const replaceTrack = (stream : MediaStream , type: StreamType ) => {
 		if(!peer) { throw new Error("No peer available"); }
 
+		// @ts-expect-error
 		for (let [key, value] of peer._connections.entries()) {
 
+			// @ts-expect-error
 			const senderTrackIndex = peer?._connections.get(key)[0].peerConnection.getSenders().findIndex((track: any) => track.track.kind === type)
 			const newTrackIndex = stream.getTracks().findIndex(track => track.kind === type)
 
+			// @ts-expect-error
 			peer._connections.get(key)[0].peerConnection.getSenders()[senderTrackIndex].replaceTrack(stream.getTracks()[newTrackIndex])
 		}
 	}
