@@ -7,6 +7,7 @@ import React, {
 import { useSelector } from "react-redux";
 import { StoreType } from "store";
 import Video from "./components/video";
+import { StreamType } from "hooks/usePeer";
 
 type Props = {
 	stream: UserStream;
@@ -15,7 +16,9 @@ type Props = {
 	style?: React.CSSProperties;
 	userId?: string;
 	updateStream: (stream : UserStream) => void,
-	peer?: Peer
+	peer?: Peer,
+	replacePeer: (stream: MediaStream, type: StreamType) => void
+	
 };
 
 const VideoStream = ({ stream, style, ...rest }: Props) => {

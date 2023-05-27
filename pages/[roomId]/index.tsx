@@ -17,7 +17,7 @@ const HomePage = () => {
 	const { data: session } = useSession();
 	const dispatch = useDispatch();
 	const [showCallView, setShowCallView] = useState(false);
-	const { id, peer } = usePeer();
+	const { id, peer  , replaceTrack} = usePeer();
 	const { socket } = useSelector((state: StoreType) => state.SocketReducer);
 	const { query } = useRouter();
 	const roomID = query.roomId;
@@ -122,7 +122,7 @@ const HomePage = () => {
 	return (
 		<>
 			{showCallView && session ? (
-				<CallLayout peer={peer} stream={stream} update={updateStream} />
+				<CallLayout peer={peer} stream={stream} update={updateStream} replacePeer={replaceTrack}/>
 			) : (
 				<HomeComponent
 					switchView={handleViewSwitch}

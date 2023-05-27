@@ -9,25 +9,27 @@ import css from "./style.module.scss";
 import { useSelector } from "react-redux";
 import { StoreType } from "store";
 import { useRouter } from "next/router";
-import { getLocalShareScreen , getLocalMediaStream} from "utils";
+import { getLocalShareScreen, getLocalMediaStream, toggleVideoCamera } from "utils";
+import { StreamType } from "hooks/usePeer";
 
 type Props = {
 	peer?: Peer;
 	stream: UserStream;
 	update: (stream: UserStream) => void
+	replacePeer: (stream: MediaStream, type: StreamType) => void
 };
 
-const CallLayout = ({ peer, stream: myStream }: Props) => {
+const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 	const [streams, setStreams] = useState<UserStream[]>([]);
 	const videoEffectRef = useRef();
-	const { socket  , ownId} = useSelector((state: StoreType) => state.SocketReducer);
+	const { socket, ownId } = useSelector((state: StoreType) => state.SocketReducer);
 	const router = useRouter()
 
-	const updateStream = useCallback((_stream : UserStream) => {
+	const updateStream = useCallback((_stream: UserStream) => {
 		const userID = _stream.userId;
 		setStreams((prevState) => prevState.map(data => {
 
-			if(data.userId === userID) {
+			if (data.userId === userID) {
 				return {
 					...data,
 					..._stream
@@ -35,25 +37,30 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 			}
 			return data
 		}))
-		
-	} , [])
 
-	const toggleVideo = useCallback(() => {
-		Emitter.emit("TOGGLE-TOOL", {type : "video" , userID : ownId});
+	}, [])
+
+	const toggleVideo = useCallback(async () => {
 		const isVideo = streams?.[0]?.video
-		if (socket && socket.connected) {
-			socket.emit("toggle-video-emit", {isVideo : !isVideo , id : ownId})
-		}
-	}, [ownId, socket, streams]);
+
+		Emitter.emit("TOGGLE-TOOL", { type: "video", payload :{
+			userId: ownId,
+			video: !isVideo
+		}});
+
+
+
+	}, [ownId, streams]);
 
 	const toggleAudio = useCallback(() => {
-		Emitter.emit("TOGGLE-TOOL",  {type : "mic" , userID : ownId});
 		const isMute = streams?.[0]?.mute
+		Emitter.emit("TOGGLE-TOOL", { type: "mic", payload :{
+			userId: ownId,
+			video: isMute
+		} });
 
-		if (socket && socket.connected) {
-			socket.emit("toggle-audio-emit", !isMute)
-		}
-	}, [ownId, streams, socket]);
+		
+	}, [ownId, streams]);
 
 
 	const handleShareScreen = useCallback(async () => {
@@ -65,23 +72,18 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 		streams[0].stream.addTrack(screenVideo.getTracks()[0])
 
 
-		screenVideo.getVideoTracks()[0].onended = async  function () {
+		screenVideo.getVideoTracks()[0].onended = async function () {
 			// doWhatYouNeedToDo();
-			const localStream = await getLocalMediaStream({video : true , audio : false})
+			const localStream = await getLocalMediaStream({ video: true, audio: false })
 			streams[0].stream.removeTrack(screenVideo.getTracks()[0])
 			streams[0].stream.addTrack(localStream.getVideoTracks()[0])
 
-			for (let [key, value] of peer._connections.entries()) {
-				peer._connections.get(key)[0].peerConnection.getSenders()[1].replaceTrack(localStream.getTracks()[0])
-			}
-
+			replacePeer(localStream, localStream.getVideoTracks()[0].kind as StreamType)
 		};
 
-		for (let [key, value] of peer._connections.entries()) {
-			peer._connections.get(key)[0].peerConnection.getSenders()[1].replaceTrack(screenVideo.getTracks()[0])
-		}
+		replacePeer(screenVideo, screenVideo.getVideoTracks()[0].kind as StreamType)
 
-	},[peer , streams])
+	}, [replacePeer, streams])
 
 
 	useEffect(() => {
@@ -97,13 +99,13 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 	const handleClose = useCallback(() => {
 		router.replace('/close')
 		socket?.disconnect()
-	} , [socket, router])
+	}, [socket, router])
 
 
 	useEffect(() => {
 		if (!peer) return;
 
-		 peer.on("call", (call) => {
+		peer.on("call", (call) => {
 			const myStream = streams?.[0]?.stream
 			const otherUserId = call.peer;
 
@@ -122,7 +124,7 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 								stream: otherUserStream,
 								userId: otherUserId,
 								video: call?.metadata?.video,
-								mute:  call?.metadata?.mute,
+								mute: call?.metadata?.mute,
 								name: call?.metadata?.name || ""
 							},
 						]
@@ -139,11 +141,11 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 		if (!socket) return;
 		if (!socket.connected) return;
 
-		socket.on("joined", ({ userId , name , video , mute}) => {
+		socket.on("joined", ({ userId, name, video, mute }) => {
 			if (!peer) return;
 			const ownMediaStream = streams?.[0]?.stream;
 			if (ownMediaStream) {
-				const _call = peer.call(userId, ownMediaStream , {metadata: {name , video : streams?.[0].video , mute : streams?.[0].mute}});
+				const _call = peer.call(userId, ownMediaStream, { metadata: { name, video: streams?.[0].video, mute: streams?.[0].mute } });
 
 				_call.on("stream", function (otherUserStream: MediaStream) {
 
@@ -157,7 +159,7 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 									stream: otherUserStream,
 									userId,
 									video: video,
-									mute:  mute,
+									mute: mute,
 									name: name || ""
 								},
 							]
@@ -196,7 +198,7 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 					overflow: "auto",
 				}}>
 				<div className='col-12'>
-					<CallComponent streams={streams} updateStream={updateStream} peer={peer}/>
+					<CallComponent streams={streams} updateStream={updateStream} peer={peer} replacePeer={replacePeer}/>
 				</div>
 			</div>
 
@@ -219,17 +221,17 @@ const CallLayout = ({ peer, stream: myStream }: Props) => {
 								className={`bi bi-camera-video${!streams?.[0]?.video ? "-off" : ""
 									}`}></i>
 						</Button>
-						<Button
+						{/* <Button
 							onClick={handleShareScreen}>
 							<i
 								className={`bi bi-arrow-up-circle`}></i>
-						</Button>
+						</Button> */}
 						<Button
 							className={classNames("", {
 								error: true,
 							})}
 							onClick={handleClose}>
-							<i className={`bi bi-telephone-fill ${css.icon_rotate}`} style={{transform : 'rotate(95deg)'}}></i>
+							<i className={`bi bi-telephone-fill ${css.icon_rotate}`} style={{ transform: 'rotate(95deg)' }}></i>
 						</Button>
 					</div>
 				</div>

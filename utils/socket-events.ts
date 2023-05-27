@@ -15,10 +15,10 @@ export const socketEvents = (
 			socket.broadcast.to(room).emit("delete-video", userId);
 		});
 
-		socket.on("toggle-audio-emit", (isMute: boolean) => {
+		socket.on("toggle-audio-emit", ({isMute , id}: {isMute: boolean , id: string}) => {
 			socket.broadcast.to(room).emit("toggle-audio", {
 				mute : isMute,
-				userId
+				userId : id
 			});
 		});
 

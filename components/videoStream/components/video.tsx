@@ -6,81 +6,141 @@ import { useSelector } from "react-redux";
 import { StoreType } from "store";
 import Image from "next/image";
 import { RefHandlerType, UserStream } from "interface";
-import { toggleVideoCamera } from "utils";
-import Peer from "peerjs";
+import { toggleMice, toggleVideoCamera } from "utils";
 import { useSession } from "next-auth/react";
+import { StreamType } from "hooks/usePeer";
 
 type Props = {
 	isMyStream?: boolean;
 	controls?: boolean;
 	stream: UserStream;
 	updateStream: (stream: UserStream) => void,
-	peer?: Peer
+	replacePeer: (stream: MediaStream, type: StreamType) => void
 };
+
+type Payload = {
+	userId: string,
+	video?: boolean,
+	mute?: boolean,
+}
 
 
 const Video = (
-	{ isMyStream, controls = false, stream, updateStream , peer}: Props,
+	{ isMyStream, controls = false, stream, updateStream, replacePeer }: Props,
 	ref: React.Ref<RefHandlerType>
 ) => {
-	const { ownId } = useSelector((state: StoreType) => state.SocketReducer);
+	const { socket, ownId } = useSelector((state: StoreType) => state.SocketReducer);
 	const videoRef = useRef() as React.MutableRefObject<HTMLVideoElement>;
-	const {data: session} = useSession()
+	const { data: session } = useSession()
 	const randomColor = useCallback(() => {
 		const x = Math.floor(Math.random() * 256);
 		const y = Math.floor(Math.random() * 256);
 		const z = Math.floor(Math.random() * 256);
 		return "rgb(" + x + "," + y + "," + z + ")";
-	} , [])
-	const userBackgroundColor = useMemo(() => randomColor() , [randomColor])
+	}, [])
+	const userBackgroundColor = useMemo(() => randomColor(), [randomColor])
 
 
 	const sliceName = useCallback(() => {
 		return stream?.name?.charAt(0)?.toUpperCase() || ""
-	} , [stream])
+	}, [stream])
 
-	
+
 	const handleCameraToggle = useCallback(
-		async (id?: string, otherUser: boolean = false) => {
+		async (payload?: Payload, socketEvent?: boolean) => {
 			const localStream = stream.stream
-			const isVideo = !stream.video
+			const isVideo = payload?.video ?? !stream.video
 
-			localStream.getVideoTracks()[0].enabled = isVideo;
+			if(socketEvent){
+				const _videoStream = await toggleVideoCamera(localStream, isVideo)
 
 				const _stream = {
 					...stream,
-					video: localStream.getVideoTracks()[0].enabled,
-					stream: localStream,
+					video: isVideo,
+					stream: _videoStream
 				}
-
 				return updateStream(_stream)
+			}
+
+			// else means local stream
+			
+			const _videoStream = await toggleVideoCamera(localStream, isVideo, replacePeer)
+
+			if (socket && socket.connected) {
+				if (payload)
+					socket.emit("toggle-video-emit", { isVideo: _videoStream.getVideoTracks()[0].enabled, id: payload.userId })
+
+				const _stream = {
+					...stream,
+					video: isVideo,
+					stream: _videoStream
+				}
+				return updateStream(_stream)
+			}
 
 		},
-		[stream, updateStream]
+		[replacePeer, socket, stream, updateStream]
 	);
 
-	const handleMicToggle = useCallback(async () => {
+	const handleMicToggle = useCallback(async (payload?: Payload, socketEvent?: boolean) => {
 		const localStream = stream.stream
-		const isMute = !stream.mute
+		const isMute =  payload?.mute ?? !stream.mute
 
-		localStream.getAudioTracks()[0].enabled = !isMute;
-		const _stream = {
-			...stream,
-			mute: isMute,
-			stream: localStream
+		if(socketEvent){
+			const _audioStream = await toggleMice(localStream, isMute)
+			console.log({
+				tracks : _audioStream.getAudioTracks(),
+				muted: !_audioStream.getAudioTracks()[0].enabled
+			})
+			const _stream = {
+				...stream,
+				stream: _audioStream,
+				mute : isMute
+			}
+			return updateStream(_stream)
 		}
 
-		return updateStream(_stream)
-	}, [stream, updateStream])
+		// else means local stream
+		
+		const _audioStream = await toggleMice(localStream, isMute, replacePeer)
+
+		if (socket && socket.connected) {
+			
+			if (payload)
+				socket.emit("toggle-audio-emit", { isMute: !_audioStream.getAudioTracks()[0].enabled, id: payload.userId })
+
+			const _stream = {
+				...stream,
+				stream: _audioStream,
+				mute : isMute
+			}
+			return updateStream(_stream)
+		}
+
+
+		// localStream.getAudioTracks()[0].enabled = !isMute;
+		// const _stream = {
+		// 	...stream,
+		// 	mute: isMute,
+		// 	stream: localStream
+		// }
+
+		// return updateStream(_stream)
+
+		// if (socket && socket.connected) {
+		// 	socket.emit("toggle-audio-emit", !isMute)
+		// }
+	}, [replacePeer, socket, stream, updateStream])
 
 	const handleToolClick = useCallback(
-		async (type: string, id?: string, otherUser?: boolean) => {
+		async (type: string, payload?: Payload, socketEvent?: boolean) => {
 			if (["mic"].includes(type)) {
-				await handleMicToggle()
+				await handleMicToggle(payload, socketEvent)
 			}
 
 			if (["video"].includes(type)) {
-				await handleCameraToggle(id, otherUser)
+
+				await handleCameraToggle(payload, socketEvent)
 			}
 
 		},
@@ -89,9 +149,9 @@ const Video = (
 
 
 	useImperativeHandle(ref, () => ({
-		toggleEvent: (type: "mic" | "video" , payload: any) => {
+		toggleEvent: (type: "mic" | "video", payload: any) => {
 			if (stream.userId === payload.userId) {
-				handleToolClick(type, payload.userId, true)
+				handleToolClick(type, payload, true)
 			}
 		},
 		updateVideoStream: () => {
@@ -102,14 +162,13 @@ const Video = (
 	}), [handleToolClick, stream]);
 
 	useEffect(() => {
-		const handleToggle = ({ type, userID }: { type: "video" | "mic" | "", userID: string }) => {
-			if (stream.userId === userID) handleToolClick(type, userID);
+		const handleToggle = ({ type, payload }: { type: "video" | "mic" | "", payload: Payload }) => {
+			if (stream.userId === payload.userId) handleToolClick(type, payload);
 		};
 		Emitter.on("TOGGLE-TOOL", handleToggle);
 
 		return () => {
 			Emitter.off("TOGGLE-TOOL", handleToggle);
-			// Emitter.clean("TOGGLE-TOOL", handleToggle);
 
 		};
 	}, [handleToolClick, stream?.userId]);
@@ -117,7 +176,7 @@ const Video = (
 	return (
 		<div className='videoStream__wrapper'>
 
-			
+
 			{/* <h1 style={{backgroundColor : "yellow" , color : "black"}}>
 				{
 					JSON.stringify(stream)
@@ -126,7 +185,7 @@ const Video = (
 			<video ref={videoRef} autoPlay muted={isMyStream}></video>
 			{stream.loading && <h2 className="loadingText">{stream.loadingText}</h2>}
 
-			{!controls && session && !stream.video && <div className="userName" style={{backgroundColor : userBackgroundColor}}>
+			{!controls && session && !stream.video && <div className="userName" style={{ backgroundColor: userBackgroundColor }}>
 				<span>{sliceName()}</span>
 			</div>}
 

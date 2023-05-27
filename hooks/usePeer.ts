@@ -2,10 +2,29 @@ import { useSession } from "next-auth/react"
 import { Peer } from "peerjs";
 import { useEffect, useRef, useState } from "react";
 
+export type StreamType = 'video' | 'audio' 
+
+
 const usePeer = () => {
 	const [peer, setPeer] = useState<Peer>();
 	const [id, setId] = useState<string>();
 	const ref = useRef();
+
+	const findKindIndex = (tracks: MediaStreamTrack[], type: StreamType) => {
+		return Array.from(tracks)
+	}
+
+	const replaceTrack = (stream : MediaStream , type: StreamType ) => {
+		if(!peer) { throw new Error("No peer available"); }
+
+		for (let [key, value] of peer._connections.entries()) {
+
+			const senderTrackIndex = peer?._connections.get(key)[0].peerConnection.getSenders().findIndex((track: any) => track.track.kind === type)
+			const newTrackIndex = stream.getTracks().findIndex(track => track.kind === type)
+
+			peer._connections.get(key)[0].peerConnection.getSenders()[senderTrackIndex].replaceTrack(stream.getTracks()[newTrackIndex])
+		}
+	}
 
 	useEffect(() => {
 		if (!peer) return;
@@ -40,6 +59,7 @@ const usePeer = () => {
 	return {
 		peer,
 		id,
+		replaceTrack
 	};
 };
 
