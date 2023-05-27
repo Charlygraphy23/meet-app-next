@@ -4,14 +4,17 @@ import Image from "next/image";
 import React, { useCallback } from "react";
 import VideoStream from "./../videoStream/index";
 import {signIn, useSession} from 'next-auth/react'
+import { StreamType } from "hooks/usePeer";
 
 type Props = {
 	switchView: () => void;
 	stream: NonNullable<UserStream>;
-	updateStream: (stream: UserStream) => void
+	updateStream: (stream: UserStream) => void;
+	replacePeer: (stream: MediaStream, type: StreamType) => void
+
 };
 
-const HomeComponent = ({ switchView, stream, updateStream }: Props) => {
+const HomeComponent = ({ switchView, stream, updateStream, replacePeer }: Props) => {
 
 	const { data: session } = useSession();
 
@@ -27,7 +30,7 @@ const HomeComponent = ({ switchView, stream, updateStream }: Props) => {
 		<div className='homeComponent container-fluid'>
 			<div className='row w-100 justify-content-center wrapper'>
 				<div className='leftAlign col-md-8' style={{ maxHeight: "400px" }}>
-					<VideoStream isMyStream={true} controls stream={stream} updateStream={updateStream} />
+					<VideoStream isMyStream={true} controls stream={stream} updateStream={updateStream} replacePeer={replacePeer}/>
 				</div>
 				<div className='rightAlign col-md-4 mt-5'>
 					<p>Ready to join?</p>
