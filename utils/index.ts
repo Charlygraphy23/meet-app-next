@@ -26,6 +26,7 @@ export const getLocalShareScreen = async () => {
 	try {
 		localStream = await navigator.mediaDevices.getDisplayMedia({
 			video: {
+				// @ts-ignore
 				displaySurface : "window",
 			},
 			audio: false
