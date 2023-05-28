@@ -17,11 +17,12 @@ type Props = {
 	userId?: string;
 	updateStream: (stream : UserStream) => void,
 	peer?: Peer,
+	hasScreenShared: boolean
 	replacePeer: (stream: MediaStream, type: StreamType) => void
 	
 };
 
-const VideoStream = ({ stream, style, ...rest }: Props) => {
+const VideoStream = ({ stream, style,hasScreenShared, ...rest }: Props) => {
 	const videoRef = useRef() as React.MutableRefObject<RefHandlerType>;
 	const ref = useRef();
 	const { socket } = useSelector((state: StoreType) => state.SocketReducer);
@@ -56,6 +57,7 @@ const VideoStream = ({ stream, style, ...rest }: Props) => {
 			if (!socket.connected) return;
 			socket.off("toggle-audio");
 			socket.off("toggle-video");
+
 		};
 
 	}, [socket])

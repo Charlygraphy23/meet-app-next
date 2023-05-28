@@ -75,6 +75,7 @@ const HomePage = () => {
 			name: session?.user?.name || "",
 			video: stream.video,
 			mute: stream.mute,
+			screenShare: false
 		});
 		setShowCallView(!showCallView);
 	}, [id, roomID, session?.user?.name, showCallView, socket, stream?.mute, stream?.video]);

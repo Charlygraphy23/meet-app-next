@@ -1,7 +1,7 @@
 import Button from "components/button";
 import { UserStream } from "interface";
 import Image from "next/image";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import VideoStream from "./../videoStream/index";
 import {signIn, useSession} from 'next-auth/react'
 import { StreamType } from "hooks/usePeer";
@@ -17,7 +17,7 @@ type Props = {
 const HomeComponent = ({ switchView, stream, updateStream, replacePeer }: Props) => {
 
 	const { data: session } = useSession();
-
+	
 	const handleGoogleLogin = useCallback(
 	  () => {
 		signIn("google")
@@ -30,7 +30,7 @@ const HomeComponent = ({ switchView, stream, updateStream, replacePeer }: Props)
 		<div className='homeComponent container-fluid'>
 			<div className='row w-100 justify-content-center wrapper'>
 				<div className='leftAlign col-md-8' style={{ maxHeight: "400px" }}>
-					<VideoStream isMyStream={true} controls stream={stream} updateStream={updateStream} replacePeer={replacePeer}/>
+					<VideoStream isMyStream={true} controls stream={stream} updateStream={updateStream} replacePeer={replacePeer} hasScreenShared={stream.screenShare}/>
 				</div>
 				<div className='rightAlign col-md-4 mt-5'>
 					<p>Ready to join?</p>

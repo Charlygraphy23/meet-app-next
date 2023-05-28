@@ -6,6 +6,7 @@ export interface UserStream {
 	loading?: boolean;
 	loadingText?: string;
 	name?: string;
+	screenShare: boolean
 }
 
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import React from "react";
 
-type Props = {
+export type ButtonProps = {
 	className?: string;
 	onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 	type?: "button" | "submit" | "reset" | undefined;
@@ -10,6 +10,7 @@ type Props = {
 	style?: React.CSSProperties;
 	id?: string;
 	link?: string
+	render?: () => React.ReactElement
 };
 
 const Button = ({
@@ -20,8 +21,10 @@ const Button = ({
 	disabled = false,
 	style,
 	id,
-	link
-}: Props) => {
+	link,
+	render,
+	...props
+}: ButtonProps) => {
 
 	if (link) {
 		return <Link href={link}>
@@ -31,8 +34,8 @@ const Button = ({
 				onClick={onClick}
 				disabled={disabled}
 				style={style}
-				id={id}>
-				{children}
+				id={id} {...props}>
+				{children ??( render ? render() : null)}
 			</button>
 		</Link>
 	}
@@ -44,8 +47,9 @@ const Button = ({
 			onClick={onClick}
 			disabled={disabled}
 			style={style}
-			id={id}>
-			{children}
+			id={id} {...props}>
+			{children ??( render ? render() : null)}
+
 		</button>
 	);
 };

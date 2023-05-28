@@ -2,7 +2,7 @@ import classNames from "classnames";
 import Button from "components/button";
 import { UserStream } from "interface";
 import Peer from "peerjs";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Emitter from "utils/emitter";
 import CallComponent from ".";
 import css from "./style.module.scss";
@@ -11,6 +11,7 @@ import { StoreType } from "store";
 import { useRouter } from "next/router";
 import { getLocalShareScreen, getLocalMediaStream, toggleVideoCamera } from "utils";
 import { StreamType } from "hooks/usePeer";
+import DropDown from "components/dropdown";
 
 type Props = {
 	peer?: Peer;
@@ -24,6 +25,8 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 	const videoEffectRef = useRef();
 	const { socket, ownId } = useSelector((state: StoreType) => state.SocketReducer);
 	const router = useRouter()
+	const hasScreenShared = useMemo(() => streams.findIndex(stream => stream.screenShare), [streams])
+
 
 	const updateStream = useCallback((_stream: UserStream) => {
 		const userID = _stream.userId;
@@ -43,10 +46,12 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 	const toggleVideo = useCallback(async () => {
 		const isVideo = streams?.[0]?.video
 
-		Emitter.emit("TOGGLE-TOOL", { type: "video", payload :{
-			userId: ownId,
-			video: !isVideo
-		}});
+		Emitter.emit("TOGGLE-TOOL", {
+			type: "video", payload: {
+				userId: ownId,
+				video: !isVideo
+			}
+		});
 
 
 
@@ -54,36 +59,56 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 
 	const toggleAudio = useCallback(() => {
 		const isMute = streams?.[0]?.mute
-		Emitter.emit("TOGGLE-TOOL", { type: "mic", payload :{
-			userId: ownId,
-			video: isMute
-		} });
+		Emitter.emit("TOGGLE-TOOL", {
+			type: "mic", payload: {
+				userId: ownId,
+				video: isMute
+			}
+		});
 
-		
+
 	}, [ownId, streams]);
 
 
 	const handleShareScreen = useCallback(async () => {
 
-		const screenVideo = await getLocalShareScreen()
-		console.log("DD", screenVideo)
 
-		streams[0].stream.removeTrack(streams[0].stream.getVideoTracks()[0])
-		streams[0].stream.addTrack(screenVideo.getTracks()[0])
+		// if anyone shared screen
+		if (hasScreenShared >= 0) return;
+
+		try {
+			const screenVideo = await getLocalShareScreen()
+			streams[0].stream.removeTrack(streams[0].stream.getVideoTracks()[0])
+			streams[0].stream.addTrack(screenVideo.getTracks()[0])
 
 
-		screenVideo.getVideoTracks()[0].onended = async function () {
-			// doWhatYouNeedToDo();
-			const localStream = await getLocalMediaStream({ video: true, audio: false })
-			streams[0].stream.removeTrack(screenVideo.getTracks()[0])
-			streams[0].stream.addTrack(localStream.getVideoTracks()[0])
+			screenVideo.getVideoTracks()[0].onended = async function () {
+				// doWhatYouNeedToDo();
+				const localStream = await getLocalMediaStream({ video: true, audio: false })
+				streams[0].stream.removeTrack(screenVideo.getTracks()[0])
+				streams[0].stream.addTrack(localStream.getVideoTracks()[0])
+				replacePeer(localStream, localStream.getVideoTracks()[0].kind as StreamType)
 
-			replacePeer(localStream, localStream.getVideoTracks()[0].kind as StreamType)
-		};
 
-		replacePeer(screenVideo, screenVideo.getVideoTracks()[0].kind as StreamType)
+				updateStream({
+					...streams[0],
+					screenShare: false
+				})
+				if (socket && socket.connected)
+					socket.emit("stop-screen-share", { id: ownId });
+			};
+			if (socket && socket.connected)
+				socket.emit("toggle-screen-share", { id: ownId });
+			replacePeer(screenVideo, screenVideo.getVideoTracks()[0].kind as StreamType)
 
-	}, [replacePeer, streams])
+			updateStream({
+				...streams[0],
+				screenShare: true
+			})
+		}
+		catch { }
+
+	}, [hasScreenShared, ownId, replacePeer, socket, streams, updateStream])
 
 
 	useEffect(() => {
@@ -125,7 +150,8 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 								userId: otherUserId,
 								video: call?.metadata?.video,
 								mute: call?.metadata?.mute,
-								name: call?.metadata?.name || ""
+								name: call?.metadata?.name || "",
+								screenShare: call?.metadata?.screenShare || false
 							},
 						]
 
@@ -141,11 +167,11 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 		if (!socket) return;
 		if (!socket.connected) return;
 
-		socket.on("joined", ({ userId, name, video, mute }) => {
+		socket.on("joined", ({ userId, name, video, mute, screenShare }) => {
 			if (!peer) return;
 			const ownMediaStream = streams?.[0]?.stream;
 			if (ownMediaStream) {
-				const _call = peer.call(userId, ownMediaStream, { metadata: { name, video: streams?.[0].video, mute: streams?.[0].mute } });
+				const _call = peer.call(userId, ownMediaStream, { metadata: { name, video: streams?.[0].video, mute: streams?.[0].mute, screenShare: streams?.[0].screenShare } });
 
 				_call.on("stream", function (otherUserStream: MediaStream) {
 
@@ -160,7 +186,8 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 									userId,
 									video: video,
 									mute: mute,
-									name: name || ""
+									name: name || "",
+									screenShare
 								},
 							]
 
@@ -185,8 +212,53 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 			if (!socket.connected) return;
 			socket.off("joined");
 			socket.off("delete-video");
+			// socket.off("toggle-screen");
 		};
-	}, [peer, socket, streams]);
+	}, [peer, socket, streams, updateStream]);
+
+
+	useEffect(() => {
+		if (!socket) return;
+		if (!socket.connected) return;
+
+		socket.on("toggle-screen", (payload) => {
+
+			console.log("Trigger", payload)
+			const findStream = streams.find(stream => stream.userId === payload.userId);
+			console.log("findStream", findStream)
+
+			if (!findStream) return
+
+			console.log("UPDATE-STREAM")
+			updateStream({
+				...findStream,
+				screenShare: true
+			})
+
+		});
+
+
+
+		socket.on("stop-screen", (payload) => {
+			const findStream = streams.find(stream => stream.userId === payload.userId);
+			if (!findStream) return
+
+			updateStream({
+				...findStream,
+				screenShare: false
+			})
+
+		});
+
+
+		return () => {
+			if (!socket) return;
+			if (!socket.connected) return;
+			socket.off("toggle-screen");
+			socket.off("stop-screen");
+
+		};
+	}, [socket, streams, updateStream]);
 
 	return (
 		<div className={css.callLayout}>
@@ -198,7 +270,7 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 					overflow: "auto",
 				}}>
 				<div className='col-12'>
-					<CallComponent streams={streams} updateStream={updateStream} peer={peer} replacePeer={replacePeer}/>
+					<CallComponent streams={streams} updateStream={updateStream} peer={peer} replacePeer={replacePeer} hasScreenShared={hasScreenShared >= 0} />
 				</div>
 			</div>
 
@@ -221,11 +293,17 @@ const CallLayout = ({ peer, stream: myStream, replacePeer }: Props) => {
 								className={`bi bi-camera-video${!streams?.[0]?.video ? "-off" : ""
 									}`}></i>
 						</Button>
-						{/* <Button
+						{/* <DropDown buttonProps={{
+							render: ()=> <p>Button</p>
+						}}>
+							<p>Hello</p>
+						</DropDown> */}
+						<Button
+							disabled={hasScreenShared >= 0}
 							onClick={handleShareScreen}>
 							<i
 								className={`bi bi-arrow-up-circle`}></i>
-						</Button> */}
+						</Button>
 						<Button
 							className={classNames("", {
 								error: true,
