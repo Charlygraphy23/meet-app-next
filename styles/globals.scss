@@ -12,6 +12,9 @@
 
 body {
 	font-size: 1.6rem;
+	overflow: hidden;
+	max-width: 100vw;
+	position: relative;
 }
 
 .appButton {
@@ -24,4 +27,45 @@ body {
 .error {
 	background-color: red !important;
 	border-color: red !important;
+}
+
+.app-loading-container {
+	position: absolute;
+	min-height: 50px;
+	background-color: white;
+	width: 100%;
+	max-width: 300px;
+	top: 0px;
+	right: 10px;
+	border-radius: 4px;
+	box-shadow: 2px 5px 15px rgba(black, 0.1);
+	font-size: 2.5rem;
+
+	display: flex;
+	align-items: center;
+	padding: 10px;
+	overflow: hidden;
+	pointer-events: none;
+	animation: notifications-animation 0.5s ease-in forwards;
+
+	& > .spinner-border {
+		font-size: 1.2rem;
+	}
+
+	& > span {
+		margin-left: 10px;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+}
+
+@keyframes notifications-animation {
+	0% {
+		top: -100%;
+	}
+
+	100% {
+		top: 10px;
+	}
 }

@@ -9,7 +9,8 @@ import usePeer from "hooks/usePeer";
 import { StoreType } from "store";
 import { useRouter } from "next/router";
 import { UserStream } from "interface";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { AppNotification } from "utils/notification";
 
 const HomePage = () => {
 	const ref = useRef();
@@ -17,7 +18,7 @@ const HomePage = () => {
 	const { data: session } = useSession();
 	const dispatch = useDispatch();
 	const [showCallView, setShowCallView] = useState(false);
-	const { id, peer  , replaceTrack} = usePeer();
+	const { id, peer, replaceTrack } = usePeer();
 	const { socket } = useSelector((state: StoreType) => state.SocketReducer);
 	const { query } = useRouter();
 	const roomID = query.roomId;
@@ -45,6 +46,7 @@ const HomePage = () => {
 	}, []);
 
 	const handleSocket = useCallback(async () => {
+		const loader = AppNotification.loading({ message: "Loading..." });
 		const abortController = handleAbortController();
 		await fetch("/api/socket", { signal: abortController.signal });
 
@@ -52,6 +54,7 @@ const HomePage = () => {
 
 		socket.on("connect", () => {
 			dispatch(getSocket(socket));
+			AppNotification.close(loader);
 		});
 
 		socket.on("disconnect", () => {});
@@ -75,10 +78,18 @@ const HomePage = () => {
 			name: session?.user?.name || "",
 			video: stream.video,
 			mute: stream.mute,
-			screenShare: false
+			screenShare: false,
 		});
 		setShowCallView(!showCallView);
-	}, [id, roomID, session?.user?.name, showCallView, socket, stream?.mute, stream?.video]);
+	}, [
+		id,
+		roomID,
+		session?.user?.name,
+		showCallView,
+		socket,
+		stream?.mute,
+		stream?.video,
+	]);
 
 	const updateStream = useCallback((stream: UserStream) => {
 		setStream(stream);
@@ -123,7 +134,12 @@ const HomePage = () => {
 	return (
 		<>
 			{showCallView && session ? (
-				<CallLayout peer={peer} stream={stream} update={updateStream} replacePeer={replaceTrack}/>
+				<CallLayout
+					peer={peer}
+					stream={stream}
+					update={updateStream}
+					replacePeer={replaceTrack}
+				/>
 			) : (
 				<HomeComponent
 					switchView={handleViewSwitch}

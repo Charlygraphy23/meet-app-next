@@ -8,8 +8,7 @@ $height: 416px;
 	width: 100%;
 	height: 100%;
 	display: flex;
-	box-shadow: 0px 10px 20px rgba(black , 0.1);
-
+	box-shadow: 0px 10px 20px rgba(black, 0.1);
 
 	.videoStream__wrapper {
 		position: relative;
@@ -22,12 +21,12 @@ $height: 416px;
 			object-position: center;
 			background-color: black;
 			z-index: 1;
-			transform: rotateY(180deg);
-			-webkit-transform: rotateY(180deg); /* Safari and Chrome */
-			-moz-transform: rotateY(180deg); /* Firefox */
+			// transform: rotateY(180deg);
+			// -webkit-transform: rotateY(180deg); /* Safari and Chrome */
+			// -moz-transform: rotateY(180deg); /* Firefox */
 		}
 
-		.loadingText{
+		.loadingText {
 			position: absolute;
 			top: 50%;
 			left: 50%;
@@ -64,24 +63,23 @@ $height: 416px;
 			}
 		}
 
-		.mute__icon{
+		.mute__icon {
 			position: absolute;
 			bottom: 10px;
 			right: 1%;
 
 			display: flex;
 			padding: 1px;
-			filter: invert(1) drop-shadow(0px 10px 30px rgba(black , 0.2));
-			
+			filter: invert(1) drop-shadow(0px 10px 30px rgba(black, 0.2));
 		}
 
-		.userName{
+		.userName {
 			position: absolute;
 			top: 50%;
 			left: 50%;
 			transform: translate(-50%, -50%);
 			color: white;
-			font-size: min(10vw , 10rem);
+			font-size: min(10vw, 10rem);
 			padding: 0em 0.45em;
 			border-radius: 50%;
 			border: 1px solid rgba(white, 0.2);
@@ -91,15 +89,12 @@ $height: 416px;
 			align-items: center;
 			text-align: center;
 
-			span{
-				font: inherit
+			span {
+				font: inherit;
 			}
-
-			
 		}
 	}
 }
-
 
 @media screen and (width <= 400px) {
 	.videoStream {
@@ -107,14 +102,14 @@ $height: 416px;
 			.tools {
 				position: absolute;
 				bottom: 0px;
-	
+
 				display: flex;
 				justify-content: center;
 				align-items: center;
 				width: 100%;
 				gap: 2.5rem;
 				padding: 10px 0px;
-	
+
 				button {
 					width: 28px;
 					height: 28px;

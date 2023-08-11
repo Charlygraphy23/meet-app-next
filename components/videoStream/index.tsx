@@ -1,9 +1,6 @@
 import { RefHandlerType, UserStream } from "interface";
 import Peer from "peerjs";
-import React, {
-	useEffect,
-	useRef,
-} from "react";
+import React, { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { StoreType } from "store";
 import Video from "./components/video";
@@ -15,14 +12,13 @@ type Props = {
 	controls?: boolean;
 	style?: React.CSSProperties;
 	userId?: string;
-	updateStream: (stream : UserStream) => void,
-	peer?: Peer,
-	hasScreenShared: boolean
-	replacePeer: (stream: MediaStream, type: StreamType) => void
-	
+	updateStream: (stream: UserStream) => void;
+	peer?: Peer;
+	hasScreenShared: boolean;
+	replacePeer: (stream: MediaStream, type: StreamType) => void;
 };
 
-const VideoStream = ({ stream, style,hasScreenShared, ...rest }: Props) => {
+const VideoStream = ({ stream, style, hasScreenShared, ...rest }: Props) => {
 	const videoRef = useRef() as React.MutableRefObject<RefHandlerType>;
 	const ref = useRef();
 	const { socket } = useSelector((state: StoreType) => state.SocketReducer);
@@ -38,38 +34,33 @@ const VideoStream = ({ stream, style,hasScreenShared, ...rest }: Props) => {
 	// 	};
 	// }, [stream]);
 
-
 	useEffect(() => {
 		if (!socket) return;
 		if (!socket.connected) return;
 
 		socket.on("toggle-audio", (payload) => {
-			videoRef.current?.toggleEvent("mic" , payload)
+			videoRef.current?.toggleEvent("mic", payload);
 		});
 
 		socket.on("toggle-video", (payload) => {
-			videoRef.current?.toggleEvent("video" , payload)
+			videoRef.current?.toggleEvent("video", payload);
 		});
-
 
 		return () => {
 			if (!socket) return;
 			if (!socket.connected) return;
 			socket.off("toggle-audio");
 			socket.off("toggle-video");
-
 		};
-
-	}, [socket])
+	}, [socket]);
 
 	useEffect(() => {
 		if (!stream) return;
 		if (!videoRef.current) return;
-		videoRef.current.updateVideoStream()
+		videoRef.current.updateVideoStream();
 	}, [stream]);
 	return (
 		<div className='videoStream' style={style}>
-
 			<Video ref={videoRef} stream={stream} {...rest} />
 		</div>
 	);
