@@ -1,3 +1,5 @@
+# This is deprecated project! V2 is coming soon.
+
 ## Achivements
 
 - Able to understand how WebRTC works
